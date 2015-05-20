@@ -1,0 +1,17 @@
+{
+    "contents" : "rm(list = ls())\n\nsetwd(\"~/Documents/college stuffs/grad school/Research/Dissertation/Application/\")\n\nlibrary(mleda)\nlibrary(randomForest)\nlibrary(nlme)\n\nmy_data <- merge(MathAchieve[, -6], MathAchSchool, by = \"School\")\nmy_data$School <- as.character(my_data$School)\n\nmy_data <- my_data[1:1000, ]\n\nrf_mod <- randomForest(MathAch ~ Minority + Sex + SES + Size + Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,\n                       data = my_data)\n\nplot_ml(the_data = my_data, the_mod = rf_mod, var_name = c(\"Minority\", \"Sex\"),\n        var_level = c(1, 1), cluster = \"School\", type = \"predicted\", interact = TRUE)\n\n# works!!\n\n# to do:\n# 1) Extend to lme4 and cforest\n# - make type passes through the main function so I can use S3 classes depending on the model!!\n# 2) Add in cross-validation\n# 3) Add in variable importance plots\n",
+    "created" : 1432135778865.000,
+    "dirty" : true,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "2266896189",
+    "id" : "40B34DF",
+    "lastKnownWriteTime" : 115,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

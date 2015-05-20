@@ -1,0 +1,19 @@
+Package: mleda
+Type: Package
+Title: Multilevel Exploratory Data Analysis
+Version: 1.0
+Date: 2015-05-20
+Author: Daniel Martin <dpmartin42@gmail.com>
+Maintainer: Daniel Martin <dpmartin42@gmail.com>
+Description: Perform efficient exploratory data analysis for multilevel data 
+             structures (limited to two levels) using random forests and 
+             mixed-effects models. Uses quick-and-dirty partial dependence 
+             plots for visualization (see plotmo package).
+Depends:
+    R (>= 3.1.0),
+    ggplot2
+Imports:
+    dplyr,
+    grid,
+    gridExtra
+License: Apache License 2.0
