@@ -14,6 +14,9 @@ Depends:
     ggplot2
 Imports:
     dplyr,
+    lme4,
     grid,
-    gridExtra
+    gridExtra,
+    party,
+    randomForest
 License: Apache License 2.0
