@@ -1,13 +1,20 @@
-#' validates stuff
-#' @param the_data - the dataset to be used
-#' @param formula - model formula for either a randomForest, cforest, or lme4 model object
-#' @param stat_method - statistical method to be used (rf for randomForest, cf for cforest, hlm for multilevel model)
-#' @param valid_method - validation method of either split-half validation or 5-fold cross-validation (splitting occurs at the cluster-level)
-#' @param cluster - string of a variable name that represents the cluster-level
-#' @return prints proportion of variation accounted for in the outcome
+#' Evaluate predictive performance of multilevel/forest models 
+#'
+#' Performs either split-half or 5-fold cross-validation (both at the cluster level) to estimate test performance for 
+#' randomForest, cforest, or lme4 models. In the continuous case, proportion of variation is reported 
+#' (i.e., 1 - MSE/var(y)). In the classification case, accuracy is reported (i.e., (TP + TN)/(TP + TN + FP + FN)).
+#' 
+#' @param the_data the dataset to be used
+#' @param formula model formula as a string for either a randomForest, cforest, or lme4 model object
+#' @param stat_method statistical method to be used ("rf" for randomForest, "cf" for cforest, "hlm" for multilevel model)
+#' @param valid_method validation method of either "split-half" for split-half validation or 
+#' "cv" for 5-fold cross-validation (splitting occurs at the cluster-level)
+#' @param cluster string of a variable name that represents the cluster-level
+#' @return Prints predictive performance of the method chosen
 #' @examples
 #' # to do
-#' @references [1] foo
+#' @references Martin, D. P. (2015). Efficiently exploring multilevel data with recursive partitioning (Unpublished doctoral
+#' dissertation). University of Virginia, Charlottesville, VA. 
 #' @import lme4 party
 #' @importFrom randomForest randomForest
 #' @export

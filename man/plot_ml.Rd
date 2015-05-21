@@ -2,38 +2,80 @@
 % Please edit documentation in R/plot_ml.R
 \name{plot_ml}
 \alias{plot_ml}
-\title{plots stuff}
+\title{Exploratory plots for multilevel data}
 \usage{
 plot_ml(the_data, the_mod, var_name, var_level, cluster, type = "raw",
   interact = FALSE, reference)
 }
 \arguments{
-\item{the_data}{- the dataset to be used}
+\item{the_data}{the dataset to be used}
 
-\item{the_mod}{- the model (limited to randomForest objects right now)}
+\item{the_mod}{the model that is either a randomForest, cforest, or lme4 model object}
 
-\item{var_name}{- vector of strings of variable names to plot}
+\item{var_name}{vector of strings of variable names to plot}
 
-\item{var_level}{- vector of numbers indicating levels (1 or 2 only)}
+\item{var_level}{vector of numbers indicating levels (1 or 2 only)}
 
-\item{cluster}{- string of variable name that represents cluster}
+\item{cluster}{string of variable name that represents cluster}
 
-\item{type}{- plot raw or predicted values}
+\item{type}{use "raw" for a loess smoother, or "predicted" for predicted values}
 
-\item{interact}{- boolean indicating if an interaction should be plotted (limited to two variables)}
+\item{interact}{boolean indicating if an interaction should be plotted (limited to two variables)}
 
-\item{reference}{- reference category in the case of classification. Default is most endorsed category}
+\item{reference}{reference category in the case of classification, with the original reference category as the default}
 }
 \value{
-plot of main effects/interactions
+Plots requested main effects/interactions
 }
 \description{
-plots stuff
+Quickly plot main effects and two-way interactions for multilevel data structures (limited to two levels) to
+visualize the relations between a set of variables and a given outcome. Uses either raw data (loess curves)
+or a "poor-man's" partial dependence plot from a randomForest, cforest, or lme4 model object.
 }
 \examples{
-# to do
+# Plot raw data for SES, MEANSES, and an interaction
+
+plot_ml(the_data = my_data, the_mod = rf_mod,
+        var_name = c("SES", "MEANSES"),
+        var_level = c(1, 2), cluster = "School",
+        type = "raw", interact = TRUE)
+
+# Random forest example
+
+rf_mod <- randomForest(MathAch ~ Minority + Sex + SES + Size +
+                       Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,
+                       data = my_data)
+
+plot_ml(the_data = my_data, the_mod = rf_mod,
+        var_name = c("SES", "MEANSES"),
+        var_level = c(1, 2), cluster = "School",
+        type = "predicted", interact = TRUE)
+
+# Conditional inference forest example
+
+cf_mod <- cforest(MathAch ~ Minority + Sex + SES + Size +
+                  Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,
+                  data = my_data)
+
+plot_ml(the_data = my_data, the_mod = cf_mod,
+        var_name = c("SES", "MEANSES"),
+        var_level = c(1, 2), cluster = "School",
+        type = "predicted", interact = TRUE)
+
+# Multi-level model example
+
+lmer_mod <- lmer(MathAch ~ Minority + Sex + SES + Size +
+                 Sector + PRACAD + DISCLIM + HIMINTY +
+                 MEANSES + (1 | School),
+                 data = my_data)
+
+plot_ml(the_data = my_data, the_mod = lmer_mod,
+        var_name = c("SES", "MEANSES"),
+        var_level = c(1, 2), cluster = "School",
+        type = "predicted", interact = TRUE)
 }
 \references{
-[1] How to add numbers
+Martin, D. P. (2015). Efficiently exploring multilevel data with recursive partitioning (Unpublished doctoral
+dissertation). University of Virginia, Charlottesville, VA.
 }
 

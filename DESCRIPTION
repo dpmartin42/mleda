@@ -5,10 +5,7 @@ Version: 1.0
 Date: 2015-05-20
 Author: Daniel Martin <dpmartin42@gmail.com>
 Maintainer: Daniel Martin <dpmartin42@gmail.com>
-Description: Perform efficient exploratory data analysis for multilevel data 
-             structures (limited to two levels) using random forests and 
-             mixed-effects models. Uses quick-and-dirty partial dependence 
-             plots for visualization (see plotmo package).
+Description: Perform efficient exploratory data analysis for multilevel data structures (limited to two levels) using random forests and mixed-effects models. Uses quick-and-dirty partial dependence plots for visualization (see plotmo package).
 Depends:
     R (>= 3.1.0),
     ggplot2
@@ -20,3 +17,4 @@ Imports:
     party,
     randomForest
 License: Apache License 2.0
+LazyData: true
