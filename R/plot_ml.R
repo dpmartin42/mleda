@@ -15,9 +15,11 @@
 #' @return Plots requested main effects/interactions
 #' @examples
 #' 
+#' ## Not run: 
+#' 
 #' # Plot raw data for SES, MEANSES, and an interaction
 #' 
-#' plot_ml(the_data = my_data, the_mod = rf_mod,
+#' plot_ml(the_data = HSB_data, the_mod = rf_mod,
 #'         var_name = c("SES", "MEANSES"),
 #'         var_level = c(1, 2), cluster = "School",
 #'         type = "raw", interact = TRUE)
@@ -26,9 +28,9 @@
 #' 
 #' rf_mod <- randomForest(MathAch ~ Minority + Sex + SES + Size + 
 #'                        Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,
-#'                        data = my_data)
+#'                        data = HSB_data)
 #' 
-#' plot_ml(the_data = my_data, the_mod = rf_mod,
+#' plot_ml(the_data = HSB_data, the_mod = rf_mod,
 #'         var_name = c("SES", "MEANSES"),
 #'         var_level = c(1, 2), cluster = "School",
 #'         type = "predicted", interact = TRUE)
@@ -37,9 +39,9 @@
 #' 
 #' cf_mod <- cforest(MathAch ~ Minority + Sex + SES + Size + 
 #'                   Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,
-#'                   data = my_data)
+#'                   data = HSB_data)
 #' 
-#' plot_ml(the_data = my_data, the_mod = cf_mod,
+#' plot_ml(the_data = HSB_data, the_mod = cf_mod,
 #'         var_name = c("SES", "MEANSES"),
 #'         var_level = c(1, 2), cluster = "School",
 #'         type = "predicted", interact = TRUE)
@@ -49,12 +51,14 @@
 #' lmer_mod <- lmer(MathAch ~ Minority + Sex + SES + Size + 
 #'                  Sector + PRACAD + DISCLIM + HIMINTY + 
 #'                  MEANSES + (1 | School),
-#'                  data = my_data)
+#'                  data = HSB_data)
 #'
-#' plot_ml(the_data = my_data, the_mod = lmer_mod,
+#' plot_ml(the_data = HSB_data, the_mod = lmer_mod,
 #'         var_name = c("SES", "MEANSES"),
 #'         var_level = c(1, 2), cluster = "School",
 #'         type = "predicted", interact = TRUE)
+#'         
+#' ## End(Not run)
 #' 
 #' @references Martin, D. P. (2015). Efficiently exploring multilevel data with recursive partitioning (Unpublished doctoral
 #' dissertation). University of Virginia, Charlottesville, VA. 

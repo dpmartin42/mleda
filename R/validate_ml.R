@@ -5,14 +5,46 @@
 #' (i.e., 1 - MSE/var(y)). In the classification case, accuracy is reported (i.e., (TP + TN)/(TP + TN + FP + FN)).
 #' 
 #' @param the_data the dataset to be used
-#' @param formula model formula as a string for either a randomForest, cforest, or lme4 model object
+#' @param formula model formula as a string for either a randomForest, cforest, or lme4 model object (runs all models with
+#' defaults)
 #' @param stat_method statistical method to be used ("rf" for randomForest, "cf" for cforest, "hlm" for multilevel model)
 #' @param valid_method validation method of either "split-half" for split-half validation or 
 #' "cv" for 5-fold cross-validation (splitting occurs at the cluster-level)
 #' @param cluster string of a variable name that represents the cluster-level
 #' @return Prints predictive performance of the method chosen
 #' @examples
-#' # to do
+#' 
+#' ## Not run: 
+#' 
+#' # Random forest with 5-fold cross-validation
+#' 
+#' validate_ml(the_data = HSB_data,
+#'             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
+#'                        PRACAD + DISCLIM + HIMINTY + MEANSES",
+#'             stat_method = "rf",
+#'             valid_method = "cv",
+#'             cluster = "School")
+#'             
+#' # Random forest with split-half cross-validation
+#' 
+#' validate_ml(the_data = HSB_data,
+#'             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
+#'                        PRACAD + DISCLIM + HIMINTY + MEANSES",
+#'             stat_method = "rf",
+#'             valid_method = "split-half",
+#'             cluster = "School")
+#'             
+#' # Multi-level model with split-half cross-validation
+#' 
+#' validate_ml(the_data = HSB_data,
+#'             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
+#'                        PRACAD + DISCLIM + HIMINTY + MEANSES + (1 | School)",
+#'             stat_method = "hlm",
+#'             valid_method = "split-half",
+#'             cluster = "School")
+#'         
+#' ## End(Not run)
+#' 
 #' @references Martin, D. P. (2015). Efficiently exploring multilevel data with recursive partitioning (Unpublished doctoral
 #' dissertation). University of Virginia, Charlottesville, VA. 
 #' @import lme4 party
