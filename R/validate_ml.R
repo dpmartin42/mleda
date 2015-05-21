@@ -24,8 +24,9 @@ validate_ml <- function(the_data, formula, stat_method, valid_method, cluster){
   if(!(stat_method %in% c("rf", "cf", "hlm"))) stop("Please choose either rf, cf, or hlm for stat_method.")
   if(!(valid_method %in% c("split-half", "cv"))) stop("Please choose either split-half or cv for valid_method.")
   
-  outcome <- gsub("~.*", "", formula) %>%
-    gsub(" ", "", .)
+  outcome <- gsub(" ", "", gsub("~.*", "", formula))
+  
+  if(!(outcome %in% names(my_data))) stop("Please re-check your formula, your outcome does not match a variable name.")
   
   if(valid_method == "split-half"){
     
@@ -153,12 +154,12 @@ validate_ml <- function(the_data, formula, stat_method, valid_method, cluster){
     if(is.factor(the_data[, outcome])){
       
       print(paste("Estimated classification accuracy for", outcome, "using a", stat_method,
-                  "model with split-half validation =", round(mean(test_error), 3)))
+                  "model with 5-fold cross-validation =", round(mean(test_error), 3)))
       
     } else{
       
       print(paste("Estimated proportion of variation explained in", outcome, "using a", stat_method,
-                  "model with split-half validation =", round(mean(test_error), 3)))
+                  "model with 5-fold cross-validation =", round(mean(test_error), 3)))
       
     }
     
