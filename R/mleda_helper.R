@@ -37,6 +37,39 @@ col_calc <- function(x){
 }
 
 #############################################
+# detect_type
+# Detect the type of the outcome using the model
+# information
+# @param the_mod the model (randomForest, cforest, or (g)lmerMod)
+
+detect_type <- function(the_mod, the_data){
+  
+  if(sum(grepl("randomForest", class(the_mod))) > 0){
+    
+    outcome <- paste(the_mod$terms[[2]])
+    the_type <- rf_mod$type
+    
+  } else if(sum(grepl("RandomForest", class(the_mod))) > 0) {
+
+    outcome <- gsub("~", "", the_mod@data@formula$response)[2]
+    the_type <- ifelse(is.factor(the_data[, outcome]),
+                       "classification",
+                       "regression")
+    
+  } else if(sum(grepl("lmerMod", class(the_mod))) > 0){
+
+    outcome <- gsub("()", "", formula(the_mod)[2])
+    the_type <- ifelse(class(the_mod) == "glmerMod",
+                       "classification",
+                       "regression")
+    
+  } else stop("Error. Model must be of class: randomForest, RandomForest, or (g)lmerMod.")
+  
+  return(c(outcome, the_type))
+  
+}
+
+#############################################
 # construct_grid
 # Constructs a grid of predicted values
 # @param the_data the dataset to be used
@@ -45,7 +78,14 @@ col_calc <- function(x){
 # @param reference reference group in the case of classification
 
 # Constructs grid of predicted values
-construct_grid <- function(the_data, the_mod, var_name, reference){
+
+construct_grid <- function(the_data, the_mod, var_name, reference, outcome, mod_type){
+  
+  if(mod_type == "classification"){
+    
+    the_data[, outcome] <- relevel(the_data[, outcome], reference)
+    
+  }  
   
   new_data <- rbind(the_data, sapply(the_data, col_calc)) %>%
     filter(row_number() == n()) %>%
@@ -102,15 +142,42 @@ construct_grid <- function(the_data, the_mod, var_name, reference){
     
   }
   
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
-    new_data$pred <- as.vector(predict(the_mod, newdata = new_data, type = "prob")[, reference])
-    
+    if("glmerMod" %in% class(the_mod)){
+      
+      the_predictions <- predict(the_mod, newdata = new_data, re.form = NA, type = "response")
+      
+    } else if("randomForest" %in% class(the_mod)){
+      
+      the_predictions <- predict(the_mod, newdata = new_data, type = "prob")[, reference]
+      
+    } else if("RandomForest" %in% class(the_mod)){
+      
+      extract_pred <- predict(the_mod, newdata = new_data, type = "prob")
+      the_predictions <- do.call(rbind, extract_pred)[, levels(new_data[, outcome]) == reference]
+      
+    } else stop("You can only use glmer, randomForest, or cforest for classification predictions.")
+      
   } else {
     
-    new_data$pred <- as.vector(predict(the_mod, newdata = new_data))
+    if("lmerMod" %in% class(the_mod)){
+
+      the_predictions <- predict(the_mod, newdata = new_data, re.form = NA)
+      
+    } else if("randomForest" %in% class(the_mod)){
+
+      the_predictions <- predict(the_mod, newdata = new_data)
+      
+    } else if("RandomForest" %in% class(the_mod)){
+
+      the_predictions <- predict(the_mod, newdata = new_data)
+      
+    } else stop("You can only use glmer, randomForest, or cforest for classification predictions.")
     
   }
+
+  new_data$pred <- as.vector(the_predictions)
   
   if(length(var_name) == 2 & sum(sapply(the_data[, var_name], is.factor)) == 0){
     
@@ -133,15 +200,13 @@ construct_grid <- function(the_data, the_mod, var_name, reference){
 # @param type either regression or classification
 # @param reference reference group in the case of classification
 
-L1_cat <- function(the_data, the_mod, var_name, type, reference){
-  
-  outcome <- paste(the_mod$terms[[2]])
-  
+L1_cat <- function(the_data, the_mod, var_name, type, reference, outcome, mod_type){
+    
   if(type == "raw"){
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -157,11 +222,11 @@ L1_cat <- function(the_data, the_mod, var_name, type, reference){
     
   } else if(type == "predicted"){
     
-    new_data <- construct_grid(the_data, the_mod, var_name, reference)
+    new_data <- construct_grid(the_data, the_mod, var_name, reference, outcome, mod_type)
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -179,7 +244,7 @@ L1_cat <- function(the_data, the_mod, var_name, type, reference){
     
   } else stop("Please enter either raw or predicted for type.")
   
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     p + ylab(paste0(y_axis, " (1 = ", reference, ")"))
     
@@ -201,15 +266,13 @@ L1_cat <- function(the_data, the_mod, var_name, type, reference){
 # @param type either regression or classification
 # @param reference reference group in the case of classification
 
-L1_cont <- function(the_data, the_mod, var_name, type, reference){
-  
-  outcome <- paste(the_mod$terms[[2]])
+L1_cont <- function(the_data, the_mod, var_name, type, reference, outcome, mod_type){
   
   if(type == "raw"){
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -225,11 +288,11 @@ L1_cont <- function(the_data, the_mod, var_name, type, reference){
     
   } else if(type == "predicted"){
     
-    new_data <- construct_grid(the_data, the_mod, var_name, reference)
+    new_data <- construct_grid(the_data, the_mod, var_name, reference, outcome, mod_type)
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -247,7 +310,7 @@ L1_cont <- function(the_data, the_mod, var_name, type, reference){
     
   } else stop("Please enter either raw or predicted for type.")
   
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     p + ylab(paste0(y_axis, " (1 = ", reference, ")"))
     
@@ -270,11 +333,9 @@ L1_cont <- function(the_data, the_mod, var_name, type, reference){
 # @param cluster cluster variable for level-2
 # @param reference reference group in the case of classification
 
-L2_cat <- function(the_data, the_mod, var_name, type, cluster, reference){
+L2_cat <- function(the_data, the_mod, var_name, type, cluster, reference, outcome, mod_type){
   
-  outcome <- paste(the_mod$terms[[2]])
-  
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     new_agg <- s_select(the_data, cluster, outcome, var_name) %>%
       s_group_by(cluster) %>%
@@ -295,9 +356,9 @@ L2_cat <- function(the_data, the_mod, var_name, type, cluster, reference){
   
   if(type == "raw"){
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -315,11 +376,11 @@ L2_cat <- function(the_data, the_mod, var_name, type, cluster, reference){
     
   } else if(type == "predicted"){
     
-    new_data <- construct_grid(the_data, the_mod, var_name, reference)
+    new_data <- construct_grid(the_data, the_mod, var_name, reference, outcome, mod_type)
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -338,7 +399,7 @@ L2_cat <- function(the_data, the_mod, var_name, type, cluster, reference){
     
   } else stop("Please enter either raw or predicted for type.")
   
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     p + ylab(paste0(y_axis, " (1 = ", reference, ")"))
     
@@ -361,11 +422,9 @@ L2_cat <- function(the_data, the_mod, var_name, type, cluster, reference){
 # @param cluster cluster variable for level-2
 # @param reference reference group in the case of classification
 
-L2_cont <- function(the_data, the_mod, var_name, type, cluster, reference){
+L2_cont <- function(the_data, the_mod, var_name, type, cluster, reference, outcome, mod_type){
   
-  outcome <- paste(the_mod$terms[[2]])
-  
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     new_agg <- s_select(the_data, cluster, outcome, var_name) %>%
       s_group_by(cluster) %>%
@@ -386,9 +445,9 @@ L2_cont <- function(the_data, the_mod, var_name, type, cluster, reference){
   
   if(type == "raw"){
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -406,11 +465,11 @@ L2_cont <- function(the_data, the_mod, var_name, type, cluster, reference){
     
   } else if(type == "predicted"){
     
-    new_data <- construct_grid(the_data, the_mod, var_name, reference)
+    new_data <- construct_grid(the_data, the_mod, var_name, reference, outcome, mod_type)
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -430,7 +489,7 @@ L2_cont <- function(the_data, the_mod, var_name, type, cluster, reference){
     
   } else stop("Please enter either raw or predicted for type.")
   
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     p + ylab(paste0(y_axis, " (1 = ", reference, ")"))
     
@@ -452,15 +511,13 @@ L2_cont <- function(the_data, the_mod, var_name, type, cluster, reference){
 # @param type either regression or classification
 # @param reference reference group in the case of classification
 
-cat_cat <- function(the_data, the_mod, var_name, type, reference){
-  
-  outcome <- paste(the_mod$terms[[2]])
+cat_cat <- function(the_data, the_mod, var_name, type, reference, outcome, mod_type){
   
   if(type == "raw"){
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -482,11 +539,11 @@ cat_cat <- function(the_data, the_mod, var_name, type, reference){
     
   } else if(type == "predicted"){
     
-    new_data <- construct_grid(the_data, the_mod, var_name, reference)
+    new_data <- construct_grid(the_data, the_mod, var_name, reference, outcome, mod_type)
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -505,7 +562,7 @@ cat_cat <- function(the_data, the_mod, var_name, type, reference){
     
   } else stop("Please enter either raw or predicted for type.")
   
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     p + ylab(paste0(y_axis, " (1 = ", reference, ")"))
     
@@ -527,18 +584,16 @@ cat_cat <- function(the_data, the_mod, var_name, type, reference){
 # @param type either regression or classification
 # @param reference reference group in the case of classification
 
-cat_cont <- function(the_data, the_mod, var_name, type, reference){
-  
-  outcome <- paste(the_mod$terms[[2]])
+cat_cont <- function(the_data, the_mod, var_name, type, reference, outcome, mod_type){
   
   is_cat <- which.max(sapply(the_data[, var_name], is.factor))
   is_cont <- which.min(sapply(the_data[, var_name], is.factor))
   
   if(type == "raw"){
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -556,11 +611,11 @@ cat_cont <- function(the_data, the_mod, var_name, type, reference){
     
   } else if(type == "predicted"){
     
-    new_data <- construct_grid(the_data, the_mod, var_name, reference)
+    new_data <- construct_grid(the_data, the_mod, var_name, reference, outcome, mod_type)
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -579,7 +634,7 @@ cat_cont <- function(the_data, the_mod, var_name, type, reference){
     
   } else stop("Please enter either raw or predicted for type.")
   
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     p + ylab(paste0(y_axis, " (1 = ", reference, ")"))
     
@@ -601,15 +656,13 @@ cat_cont <- function(the_data, the_mod, var_name, type, reference){
 # @param type either regression or classification
 # @param reference reference group in the case of classification
 
-cont_cont <- function(the_data, the_mod, var_name, type, reference){
-  
-  outcome <- paste(the_mod$terms[[2]])
+cont_cont <- function(the_data, the_mod, var_name, type, reference, outcome, mod_type){
   
   if(type == "raw"){
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -633,11 +686,11 @@ cont_cont <- function(the_data, the_mod, var_name, type, reference){
     
   } else if(type == "predicted"){
     
-    new_data <- construct_grid(the_data, the_mod, var_name, reference)
+    new_data <- construct_grid(the_data, the_mod, var_name, reference, outcome, mod_type)
     
-    if(the_mod$type == "classification"){
+    if(mod_type == "classification"){
       
-      the_data[, paste(the_mod$terms[[2]])] <- ifelse(the_data[, paste(the_mod$terms[[2]])] == reference, 1, 0)
+      the_data[, outcome] <- ifelse(the_data[, outcome] == reference, 1, 0)
       
     }
     
@@ -658,7 +711,7 @@ cont_cont <- function(the_data, the_mod, var_name, type, reference){
     
   } else stop("Please enter either raw or predicted for type.")
   
-  if(the_mod$type == "classification"){
+  if(mod_type == "classification"){
     
     p + ylab(paste0(y_axis, " (1 = ", reference, ")"))
     

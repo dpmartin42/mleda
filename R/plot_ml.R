@@ -16,6 +16,9 @@
 
 plot_ml <- function(the_data, the_mod, var_name, var_level, cluster, type = "raw", interact = FALSE, reference){
   
+  outcome <- detect_type(the_mod, the_data)[1]
+  mod_type <- detect_type(the_mod, the_data)[2]
+  
   if(length(var_name) != length(var_level)) stop("Please make sure var_name and var_level are of matching lengths.")
   
   if(interact == TRUE & length(var_name) > 2) stop("Interactions are limited to two variables.")
@@ -24,13 +27,13 @@ plot_ml <- function(the_data, the_mod, var_name, var_level, cluster, type = "raw
   
   if(sum(!(var_level %in% c(1, 2))) > 0) stop("Please use only 1 or 2 as numeric values to indicate levels.")
   
-  if(the_mod$type == "classification" & missing(reference)) reference <- levels(the_data[, paste(the_mod$terms[[2]])])[1]
+  if(mod_type == "classification" & missing(reference)) reference <- levels(the_data[, outcome])[1]
   
   if(!missing(reference)){
     
-    if(the_mod$type != "classification") stop("Only use a reference group for a classification forest")
+    if(mod_type != "classification") stop("Only use a reference group for a classification forest")
     
-    if(!(reference %in% levels(the_data[, paste(the_mod$terms[[2]])]))) stop(paste(reference, "not a correct level."))
+    if(!(reference %in% levels(the_data[, outcome]))) stop(paste(reference, "not a correct level."))
     
   }   
   
@@ -41,24 +44,24 @@ plot_ml <- function(the_data, the_mod, var_name, var_level, cluster, type = "raw
   }
   
   plot_list <- list(NA)
-  
+
   for(the_plot in 1:length(var_name)){
     
     if(is.factor(the_data[, var_name[the_plot]]) & var_level[the_plot] == 1){
       
-      p <- L1_cat(the_data, the_mod, var_name[the_plot], type, reference)
+      p <- L1_cat(the_data, the_mod, var_name[the_plot], type, reference, outcome, mod_type)
       
     } else if(is.factor(the_data[, var_name[the_plot]]) & var_level[the_plot] == 2){
       
-      p <- L2_cat(the_data, the_mod, var_name[the_plot], type, cluster, reference)
+      p <- L2_cat(the_data, the_mod, var_name[the_plot], type, cluster, reference, outcome, mod_type)
       
     } else if(!is.factor(the_data[, var_name[the_plot]]) & var_level[the_plot] == 1){
       
-      p <- L1_cont(the_data, the_mod, var_name[the_plot], type, reference)
+      p <- L1_cont(the_data, the_mod, var_name[the_plot], type, reference, outcome, mod_type)
       
     } else{
       
-      p <- L2_cont(the_data, the_mod, var_name[the_plot], type, cluster, reference)
+      p <- L2_cont(the_data, the_mod, var_name[the_plot], type, cluster, reference, outcome, mod_type)
       
     }
     
@@ -83,15 +86,15 @@ plot_ml <- function(the_data, the_mod, var_name, var_level, cluster, type = "raw
     
     if(sum(var_level == 1) %in% c(0, 1, 2) & sum(sapply(the_data[, var_name], is.factor)) == 2){
       
-      plot_list[[length(plot_list) + 1]] <- cat_cat(the_data, the_mod, var_name, type, reference)
+      plot_list[[length(plot_list) + 1]] <- cat_cat(the_data, the_mod, var_name, type, reference, outcome, mod_type)
       
     } else if(sum(var_level == 1) %in% c(0, 1, 2) & sum(sapply(the_data[, var_name], is.factor)) == 1){
       
-      plot_list[[length(plot_list) + 1]] <- cat_cont(the_data, the_mod, var_name, type, reference)
+      plot_list[[length(plot_list) + 1]] <- cat_cont(the_data, the_mod, var_name, type, reference, outcome, mod_type)
       
     } else if(sum(var_level == 1) %in% c(0, 1, 2) & sum(sapply(the_data[, var_name], is.factor)) == 0){
       
-      plot_list[[length(plot_list) + 1]] <- cont_cont(the_data, the_mod, var_name, type, reference)
+      plot_list[[length(plot_list) + 1]] <- cont_cont(the_data, the_mod, var_name, type, reference, outcome, mod_type)
       
     } else{
       
