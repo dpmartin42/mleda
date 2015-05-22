@@ -4,7 +4,7 @@ An R package with useful functions for **M**ulti**-L**evel **E**xploratory **D**
 
 This package contains two main functions:
 
-* `plot_ml` allows the user to plot the relations between a set of variables and a given outcome. Plots include both main effects and two-way interactions, and can be based on either loess curves using raw data or predictions from a [randomForest](http://cran.r-project.org/web/packages/randomForest/index.html), [cforest]([party](http://cran.r-project.org/web/packages/party/index.html), or [lme4](http://cran.r-project.org/web/packages/lme4/index.html) model object using a modified [partial dependence plot](http://dpmartin42.github.io/posts/partial-dependence-1/).
+* `plot_ml` allows the user to plot the relations between a set of variables and a given outcome. Plots include both main effects and two-way interactions, and can be based on either loess curves using raw data or predictions from a [randomForest](http://cran.r-project.org/web/packages/randomForest/index.html), [cforest](http://cran.r-project.org/web/packages/party/index.html), or [lme4](http://cran.r-project.org/web/packages/lme4/index.html) model object using a modified [partial dependence plot](http://dpmartin42.github.io/posts/partial-dependence-1/).
 
 * `validate_ml` performs either split-half or 5-fold cross-validation (both at the cluster level) to estimate test performance for randomForest, cforest, or lme4 models. In the continuous case, proportion of variation is reported (i.e., 1 - MSE/var(y)). In the classification case, accuracy is reported (i.e., (TP + TN)/(TP + TN + FP + FN)).
 
