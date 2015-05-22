@@ -41,12 +41,12 @@ col_calc <- function(x){
 # Detect the type of the outcome using the model
 # information
 # @param the_mod the model (randomForest, cforest, or (g)lmerMod)
+# @param the_data the dataset
 
 detect_type <- function(the_mod, the_data){
   
   if(sum(grepl("randomForest", class(the_mod))) > 0){
     
-    outcome <- paste(the_mod$terms[[2]])
     the_type <- rf_mod$type
     
   } else if(sum(grepl("RandomForest", class(the_mod))) > 0) {
@@ -58,14 +58,13 @@ detect_type <- function(the_mod, the_data){
     
   } else if(sum(grepl("lmerMod", class(the_mod))) > 0){
 
-    outcome <- gsub("()", "", formula(the_mod)[2])
     the_type <- ifelse(class(the_mod) == "glmerMod",
                        "classification",
                        "regression")
     
   } else stop("Error. Model must be of class: randomForest, RandomForest, or (g)lmerMod.")
   
-  return(c(outcome, the_type))
+  return(the_type)
   
 }
 

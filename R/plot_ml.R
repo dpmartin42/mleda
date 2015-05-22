@@ -5,11 +5,12 @@
 #' or a "poor-man's" partial dependence plot from a randomForest, cforest, or lme4 model object.
 #' 
 #' @param the_data the dataset to be used
-#' @param the_mod the model that is either a randomForest, cforest, or lme4 model object
+#' @param the_mod optional model that is either a randomForest, cforest, or lme4 model object
+#' (omit this argument to use loess curves on raw data)
 #' @param var_name vector of strings of variable names to plot
 #' @param var_level vector of numbers indicating levels (1 or 2 only)
 #' @param cluster string of variable name that represents cluster
-#' @param type use "raw" for a loess smoother, or "predicted" for predicted values
+#' @param outcome string of variable name that represents the outcome
 #' @param interact boolean indicating if an interaction should be plotted (limited to two variables)
 #' @param reference reference category in the case of classification, with the original reference category as the default
 #' @return Plots requested main effects/interactions
@@ -19,10 +20,10 @@
 #' 
 #' # Plot raw data for SES, MEANSES, and an interaction
 #' 
-#' plot_ml(the_data = HSB_data, the_mod = rf_mod,
+#' plot_ml(the_data = HSB_data, outcome = "MathAch",
 #'         var_name = c("SES", "MEANSES"),
 #'         var_level = c(1, 2), cluster = "School",
-#'         type = "raw", interact = TRUE)
+#'         interact = TRUE)
 #' 
 #' # Random forest example
 #' 
@@ -30,10 +31,10 @@
 #'                        Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,
 #'                        data = HSB_data)
 #' 
-#' plot_ml(the_data = HSB_data, the_mod = rf_mod,
+#' plot_ml(the_data = HSB_data, outcome = "MathAch",
 #'         var_name = c("SES", "MEANSES"),
 #'         var_level = c(1, 2), cluster = "School",
-#'         type = "predicted", interact = TRUE)
+#'         interact = TRUE, the_mod = rf_mod)
 #' 
 #' # Conditional inference forest example
 #' 
@@ -41,10 +42,10 @@
 #'                   Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,
 #'                   data = HSB_data)
 #' 
-#' plot_ml(the_data = HSB_data, the_mod = cf_mod,
+#' plot_ml(the_data = HSB_data, outcome = "MathAch",
 #'         var_name = c("SES", "MEANSES"),
 #'         var_level = c(1, 2), cluster = "School",
-#'         type = "predicted", interact = TRUE)
+#'         interact = TRUE, the_mod = cf_mod)
 #' 
 #' # Multi-level model example
 #' 
@@ -53,10 +54,10 @@
 #'                  MEANSES + (1 | School),
 #'                  data = HSB_data)
 #'
-#' plot_ml(the_data = HSB_data, the_mod = lmer_mod,
+#' plot_ml(the_data = HSB_data, outcome = "MathAch",
 #'         var_name = c("SES", "MEANSES"),
 #'         var_level = c(1, 2), cluster = "School",
-#'         type = "predicted", interact = TRUE)
+#'         interact = TRUE, the_mod = lmer_mod)
 #'         
 #' ## End(Not run)
 #' 
@@ -65,10 +66,21 @@
 #' @import dplyr ggplot2 grid gridExtra
 #' @export
 
-plot_ml <- function(the_data, the_mod, var_name, var_level, cluster, type = "raw", interact = FALSE, reference){
+plot_ml <- function(the_data, the_mod, var_name, var_level, cluster, outcome, interact = FALSE, reference){
   
-  outcome <- detect_type(the_mod, the_data)[1]
-  mod_type <- detect_type(the_mod, the_data)[2]
+  if(!missing(the_mod)){
+    
+    mod_type <- detect_type(the_mod, the_data)
+    type <- "predicted"
+    
+  } else {
+    
+    mod_type <- ifelse(is.factor(the_data[, outcome]),
+                       "classification",
+                       "regression")
+    type <- "raw"
+    
+  }
   
   if(length(var_name) != length(var_level)) stop("Please make sure var_name and var_level are of matching lengths.")
   

@@ -9,7 +9,8 @@ validate_ml(the_data, formula, stat_method, valid_method, cluster)
 \arguments{
 \item{the_data}{the dataset to be used}
 
-\item{formula}{model formula as a string for either a randomForest, cforest, or lme4 model object}
+\item{formula}{model formula as a string for either a randomForest, cforest, or lme4 model object (runs all models with
+defaults)}
 
 \item{stat_method}{statistical method to be used ("rf" for randomForest, "cf" for cforest, "hlm" for multilevel model)}
 
@@ -27,7 +28,36 @@ randomForest, cforest, or lme4 models. In the continuous case, proportion of var
 (i.e., 1 - MSE/var(y)). In the classification case, accuracy is reported (i.e., (TP + TN)/(TP + TN + FP + FN)).
 }
 \examples{
-# to do
+## Not run:
+
+# Random forest with 5-fold cross-validation
+
+validate_ml(the_data = HSB_data,
+            formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
+                       PRACAD + DISCLIM + HIMINTY + MEANSES",
+            stat_method = "rf",
+            valid_method = "cv",
+            cluster = "School")
+
+# Random forest with split-half cross-validation
+
+validate_ml(the_data = HSB_data,
+            formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
+                       PRACAD + DISCLIM + HIMINTY + MEANSES",
+            stat_method = "rf",
+            valid_method = "split-half",
+            cluster = "School")
+
+# Multi-level model with split-half cross-validation
+
+validate_ml(the_data = HSB_data,
+            formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
+                       PRACAD + DISCLIM + HIMINTY + MEANSES + (1 | School)",
+            stat_method = "hlm",
+            valid_method = "split-half",
+            cluster = "School")
+
+## End(Not run)
 }
 \references{
 Martin, D. P. (2015). Efficiently exploring multilevel data with recursive partitioning (Unpublished doctoral

@@ -4,13 +4,14 @@
 \alias{plot_ml}
 \title{Exploratory plots for multilevel data}
 \usage{
-plot_ml(the_data, the_mod, var_name, var_level, cluster, type = "raw",
+plot_ml(the_data, the_mod, var_name, var_level, cluster, outcome,
   interact = FALSE, reference)
 }
 \arguments{
 \item{the_data}{the dataset to be used}
 
-\item{the_mod}{the model that is either a randomForest, cforest, or lme4 model object}
+\item{the_mod}{optional model that is either a randomForest, cforest, or lme4 model object
+(omit this argument to use loess curves on raw data)}
 
 \item{var_name}{vector of strings of variable names to plot}
 
@@ -18,7 +19,7 @@ plot_ml(the_data, the_mod, var_name, var_level, cluster, type = "raw",
 
 \item{cluster}{string of variable name that represents cluster}
 
-\item{type}{use "raw" for a loess smoother, or "predicted" for predicted values}
+\item{outcome}{string of variable name that represents the outcome}
 
 \item{interact}{boolean indicating if an interaction should be plotted (limited to two variables)}
 
@@ -33,46 +34,50 @@ visualize the relations between a set of variables and a given outcome. Uses eit
 or a "poor-man's" partial dependence plot from a randomForest, cforest, or lme4 model object.
 }
 \examples{
+## Not run:
+
 # Plot raw data for SES, MEANSES, and an interaction
 
-plot_ml(the_data = my_data, the_mod = rf_mod,
+plot_ml(the_data = HSB_data, outcome = "MathAch",
         var_name = c("SES", "MEANSES"),
         var_level = c(1, 2), cluster = "School",
-        type = "raw", interact = TRUE)
+        interact = TRUE)
 
 # Random forest example
 
 rf_mod <- randomForest(MathAch ~ Minority + Sex + SES + Size +
                        Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,
-                       data = my_data)
+                       data = HSB_data)
 
-plot_ml(the_data = my_data, the_mod = rf_mod,
+plot_ml(the_data = HSB_data, outcome = "MathAch",
         var_name = c("SES", "MEANSES"),
         var_level = c(1, 2), cluster = "School",
-        type = "predicted", interact = TRUE)
+        interact = TRUE, the_mod = rf_mod)
 
 # Conditional inference forest example
 
 cf_mod <- cforest(MathAch ~ Minority + Sex + SES + Size +
                   Sector + PRACAD + DISCLIM + HIMINTY + MEANSES,
-                  data = my_data)
+                  data = HSB_data)
 
-plot_ml(the_data = my_data, the_mod = cf_mod,
+plot_ml(the_data = HSB_data, outcome = "MathAch",
         var_name = c("SES", "MEANSES"),
         var_level = c(1, 2), cluster = "School",
-        type = "predicted", interact = TRUE)
+        interact = TRUE, the_mod = cf_mod)
 
 # Multi-level model example
 
 lmer_mod <- lmer(MathAch ~ Minority + Sex + SES + Size +
                  Sector + PRACAD + DISCLIM + HIMINTY +
                  MEANSES + (1 | School),
-                 data = my_data)
+                 data = HSB_data)
 
-plot_ml(the_data = my_data, the_mod = lmer_mod,
+plot_ml(the_data = HSB_data, outcome = "MathAch",
         var_name = c("SES", "MEANSES"),
         var_level = c(1, 2), cluster = "School",
-        type = "predicted", interact = TRUE)
+        interact = TRUE, the_mod = lmer_mod)
+
+## End(Not run)
 }
 \references{
 Martin, D. P. (2015). Efficiently exploring multilevel data with recursive partitioning (Unpublished doctoral
