@@ -15,6 +15,7 @@ Imports:
     grid,
     gridExtra,
     party,
-    randomForest
+    randomForest,
+    reshape
 License: Apache License 2.0
 LazyData: true

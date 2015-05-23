@@ -58,7 +58,7 @@ validate_ml <- function(the_data, formula, stat_method, valid_method, cluster){
   
   outcome <- gsub(" ", "", gsub("~.*", "", formula))
   
-  if(!(outcome %in% names(my_data))) stop("Please re-check your formula, your outcome does not match a variable name.")
+  if(!(outcome %in% names(the_data))) stop("Please re-check your formula, your outcome does not match a variable name.")
   
   if(valid_method == "split-half"){
     
