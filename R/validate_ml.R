@@ -1,8 +1,9 @@
 #' Evaluate predictive performance of multilevel/forest models 
 #'
-#' Performs either split-half or 5-fold cross-validation (both at the cluster level) to estimate test performance for 
+#' Performs either split-half or k-fold cross-validation (both at the cluster level) to estimate test performance for 
 #' randomForest, cforest, or lme4 models. In the continuous case, proportion of variation is reported 
 #' (i.e., 1 - MSE/var(y)). In the classification case, accuracy is reported (i.e., (TP + TN)/(TP + TN + FP + FN)).
+#' Before using this function, create_fold must be used first.
 #' 
 #' @param the_data the dataset to be used
 #' @param formula model formula as a string for either a randomForest, cforest, or lme4 model object (runs all models with
@@ -16,31 +17,36 @@
 #' 
 #' ## Not run: 
 #' 
+#' # For 5-fold cross-validation
+#' 
+#' data_fold <- create_fold(HSB_data, "School", 5)
+#' 
 #' # Random forest with 5-fold cross-validation
 #' 
-#' validate_ml(the_data = HSB_data,
+#' validate_ml(the_data = data_fold,
 #'             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
 #'                        PRACAD + DISCLIM + HIMINTY + MEANSES",
 #'             stat_method = "rf",
-#'             valid_method = "cv",
 #'             cluster = "School")
 #'             
-#' # Random forest with split-half cross-validation
+#' # For split-half validation
 #' 
-#' validate_ml(the_data = HSB_data,
+#' data_fold <- create_fold(HSB_data, "School", 2)
+#'             
+#' # Random forest with split-half validation
+#' 
+#' validate_ml(the_data = data_fold,
 #'             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
 #'                        PRACAD + DISCLIM + HIMINTY + MEANSES",
 #'             stat_method = "rf",
-#'             valid_method = "split-half",
 #'             cluster = "School")
 #'             
 #' # Multi-level model with split-half cross-validation
 #' 
-#' validate_ml(the_data = HSB_data,
+#' validate_ml(the_data = data_fold,
 #'             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
 #'                        PRACAD + DISCLIM + HIMINTY + MEANSES + (1 | School)",
 #'             stat_method = "hlm",
-#'             valid_method = "split-half",
 #'             cluster = "School")
 #'         
 #' ## End(Not run)
@@ -51,21 +57,22 @@
 #' @importFrom randomForest randomForest
 #' @export
 
-validate_ml <- function(the_data, formula, stat_method, valid_method, cluster){
+validate_ml <- function(the_data, formula, stat_method, cluster){
   
   if(!(stat_method %in% c("rf", "cf", "hlm"))) stop("Please choose either rf, cf, or hlm for stat_method.")
-  if(!(valid_method %in% c("split-half", "cv"))) stop("Please choose either split-half or cv for valid_method.")
+  if(!("fold" %in% names(the_data))) stop("Please use create_fold first before model validation. Comparisons must be done on the same folds.")
   
   outcome <- gsub(" ", "", gsub("~.*", "", formula))
+  valid_method <- ifelse(length(unique(the_data$fold)) == 2,
+                         "split-half",
+                         "cv")
   
   if(!(outcome %in% names(the_data))) stop("Please re-check your formula, your outcome does not match a variable name.")
   
   if(valid_method == "split-half"){
     
-    train_ids <- sample(x = unique(the_data[, cluster]), size = floor(length(unique(the_data[, cluster]))/2), replace = FALSE)
-    
-    train <- the_data[the_data[, cluster] %in% train_ids, ]
-    test <- the_data[!(the_data[, cluster] %in% train_ids), ]
+    train <- the_data[the_data$fold == 1, ]
+    test <- the_data[the_data$fold == 2, ]
     
     if(stat_method == "rf"){
       
@@ -120,22 +127,11 @@ validate_ml <- function(the_data, formula, stat_method, valid_method, cluster){
      
   } else if(valid_method == "cv"){
     
-    the_data$fold <- NA
-    
-    shuffle_group <- sample(x = unique(the_data[, cluster]), size = length(unique(the_data[, cluster])), replace = FALSE)
-    fold_label <- split(shuffle_group, cut(seq_along(shuffle_group), 5, labels = FALSE))
-    
-    for(list_element in 1:length(fold_label)){
-      
-      the_data[the_data[, cluster] %in% fold_label[[list_element]], ]$fold <- list_element
-      
-    }
-
     test_error <- c(NA)
     
-    pb <- txtProgressBar(min = 0, max = 5, initial = 0) 
+    pb <- txtProgressBar(min = 0, max = length(unique(the_data$fold)), initial = 0) 
     
-    for(i in 1:5){
+    for(i in 1:length(unique(the_data$fold))){
       
       train <- the_data[the_data$fold != i, ]
       test <- the_data[the_data$fold == i, ]
@@ -185,13 +181,15 @@ validate_ml <- function(the_data, formula, stat_method, valid_method, cluster){
     
     if(is.factor(the_data[, outcome])){
       
-      print(paste("Estimated classification accuracy for", outcome, "using a", stat_method,
-                  "model with 5-fold cross-validation =", round(mean(test_error), 3)))
+      print(paste0("Estimated classification accuracy for ", outcome, " using a ", stat_method,
+                  " model with ", length(unique(the_data$fold)), "-fold cross-validation = ",
+                  round(mean(test_error), 3)))
       
     } else{
       
-      print(paste("Estimated proportion of variation explained in", outcome, "using a", stat_method,
-                  "model with 5-fold cross-validation =", round(mean(test_error), 3)))
+      print(paste0("Estimated proportion of variation explained in ", outcome, " using a ", stat_method,
+                  " model with ", length(unique(the_data$fold)), "-fold cross-validation = ",
+                  round(mean(test_error), 3)))
       
     }
     

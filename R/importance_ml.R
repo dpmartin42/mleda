@@ -36,7 +36,7 @@
 #' 
 #' @references Martin, D. P. (2015). Efficiently exploring multilevel data with recursive partitioning (Unpublished doctoral
 #' dissertation). University of Virginia, Charlottesville, VA. 
-#' @import reshape
+#' @importFrom reshape melt.data.frame
 #' @export
 
 importance_ml <- function(mod_list){
@@ -117,7 +117,7 @@ importance_ml <- function(mod_list){
   imp_sorted <- imp_df[order(imp_df$imp_mean, decreasing = TRUE), ]
 
   var_order <- imp_sorted$var_name
-  imp_long <- melt(imp_sorted[, 1:(length(mod_list) + 1)], id.vars = "var_name")
+  imp_long <- melt.data.frame(imp_sorted[, 1:(length(mod_list) + 1)], id.vars = "var_name")
   imp_long$var_name <- factor(imp_long$var_name, levels = imp_sorted$var_name)
   
   ggplot(aes(x = var_name, y = value, group = variable), data = imp_long) +

@@ -4,7 +4,7 @@
 \alias{validate_ml}
 \title{Evaluate predictive performance of multilevel/forest models}
 \usage{
-validate_ml(the_data, formula, stat_method, valid_method, cluster)
+validate_ml(the_data, formula, stat_method, cluster)
 }
 \arguments{
 \item{the_data}{the dataset to be used}
@@ -14,47 +14,53 @@ defaults)}
 
 \item{stat_method}{statistical method to be used ("rf" for randomForest, "cf" for cforest, "hlm" for multilevel model)}
 
+\item{cluster}{string of a variable name that represents the cluster-level}
+
 \item{valid_method}{validation method of either "split-half" for split-half validation or
 "cv" for 5-fold cross-validation (splitting occurs at the cluster-level)}
-
-\item{cluster}{string of a variable name that represents the cluster-level}
 }
 \value{
 Prints predictive performance of the method chosen
 }
 \description{
-Performs either split-half or 5-fold cross-validation (both at the cluster level) to estimate test performance for
+Performs either split-half or k-fold cross-validation (both at the cluster level) to estimate test performance for
 randomForest, cforest, or lme4 models. In the continuous case, proportion of variation is reported
 (i.e., 1 - MSE/var(y)). In the classification case, accuracy is reported (i.e., (TP + TN)/(TP + TN + FP + FN)).
+Before using this function, create_fold must be used first.
 }
 \examples{
 ## Not run:
 
+# For 5-fold cross-validation
+
+data_fold <- create_fold(HSB_data, "School", 5)
+
 # Random forest with 5-fold cross-validation
 
-validate_ml(the_data = HSB_data,
+validate_ml(the_data = data_fold,
             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
                        PRACAD + DISCLIM + HIMINTY + MEANSES",
             stat_method = "rf",
-            valid_method = "cv",
             cluster = "School")
 
-# Random forest with split-half cross-validation
+# For split-half validation
 
-validate_ml(the_data = HSB_data,
+data_fold <- create_fold(HSB_data, "School", 2)
+
+# Random forest with split-half validation
+
+validate_ml(the_data = data_fold,
             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
                        PRACAD + DISCLIM + HIMINTY + MEANSES",
             stat_method = "rf",
-            valid_method = "split-half",
             cluster = "School")
 
 # Multi-level model with split-half cross-validation
 
-validate_ml(the_data = HSB_data,
+validate_ml(the_data = data_fold,
             formula = "MathAch ~ Minority + Sex + SES + Size + Sector +
                        PRACAD + DISCLIM + HIMINTY + MEANSES + (1 | School)",
             stat_method = "hlm",
-            valid_method = "split-half",
             cluster = "School")
 
 ## End(Not run)

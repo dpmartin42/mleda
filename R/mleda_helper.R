@@ -56,7 +56,7 @@ detect_type <- function(the_mod, the_data){
                        "classification",
                        "regression")
     
-  } else if(sum(grepl("lmerMod", class(the_mod))) > 0){
+  } else if(sum(grepl("merMod", class(the_mod))) > 0){
 
     the_type <- ifelse(class(the_mod) == "glmerMod",
                        "classification",
@@ -147,11 +147,11 @@ construct_grid <- function(the_data, the_mod, var_name, reference, outcome, mod_
       
       the_predictions <- predict(the_mod, newdata = new_data, re.form = NA, type = "response")
       
-    } else if("randomForest" %in% class(the_mod)){
+    } else if(sum(grepl("randomForest", class(the_mod))) > 0){
       
       the_predictions <- predict(the_mod, newdata = new_data, type = "prob")[, reference]
       
-    } else if("RandomForest" %in% class(the_mod)){
+    } else if(sum(grepl("RandomForest", class(the_mod))) > 0){
       
       extract_pred <- predict(the_mod, newdata = new_data, type = "prob")
       the_predictions <- do.call(rbind, extract_pred)[, levels(new_data[, outcome]) == reference]
@@ -160,15 +160,15 @@ construct_grid <- function(the_data, the_mod, var_name, reference, outcome, mod_
       
   } else {
     
-    if("lmerMod" %in% class(the_mod)){
+    if(sum(grepl("merMod", class(the_mod))) > 0){
 
       the_predictions <- predict(the_mod, newdata = new_data, re.form = NA)
       
-    } else if("randomForest" %in% class(the_mod)){
+    } else if(sum(grepl("randomForest", class(the_mod))) > 0){
 
       the_predictions <- predict(the_mod, newdata = new_data)
       
-    } else if("RandomForest" %in% class(the_mod)){
+    } else if(sum(grepl("RandomForest", class(the_mod))) > 0){
 
       the_predictions <- predict(the_mod, newdata = new_data)
       
