@@ -2,13 +2,15 @@
 
 An R package with useful functions for **M**ulti**-L**evel **E**xploratory **D**ata **A**nalysis, specifically for two-level hierarchical data structures.
 
-This package contains two main functions:
+This package contains three main functions:
 
 * `plot_ml` allows the user to plot the relations between a set of variables and a given outcome. Plots include both main effects and two-way interactions, and can be based on either loess curves using raw data or predictions from a [randomForest](http://cran.r-project.org/web/packages/randomForest/index.html), [cforest](http://cran.r-project.org/web/packages/party/index.html), or [lme4](http://cran.r-project.org/web/packages/lme4/index.html) model object using a modified [partial dependence plot](http://dpmartin42.github.io/posts/partial-dependence-1/).
 
+* `importance_ml` plots and compares importance for an arbitrary number of statistical models (limited to randomForest, cforest, and lme4 models. Variable importance for forest models are calculated using built-in procedures based on permutation tests, while importance for lme4 are naively defined as the p-value of the respective parameter, estimated via a Satterthwaite approximation. These values are then standardized to allow for easier comparisons, and the resulting plots are ordered such that the most important variable (averaged across all models) is the furthest left on the x-axis.
+
 * `validate_ml` performs either split-half or 5-fold cross-validation (both at the cluster level) to estimate test performance for randomForest, cforest, or lme4 models. In the continuous case, proportion of variation is reported (i.e., 1 - MSE/var(y)). In the classification case, accuracy is reported (i.e., (TP + TN)/(TP + TN + FP + FN)).
 
-With regards to the modified partial dependence plot, the following procedure is used. Instead of repeating the entire training set, a new dataset is created that consists of one observation: the median value for all continuous variables and the most-endorsed level for either categorical or ordinal variables. This new observation is then varied across all the joint values of the predictions of interest. While not a true partial dependence plot, it typically will yield similar results and has the same computation time regardless of the sample size of the training set. 
+With regards to the modified partial dependence plot, the following procedure is used. Instead of repeating the entire training set, a new dataset is created that consists of one observation: the median value for all continuous variables and the most-endorsed level for either categorical or ordinal variables. This new observation is then varied across all the joint values of the predictors of interest. While not a true partial dependence plot, it typically will yield similar results and has the same computation time regardless of the sample size of the training set. 
 
 This approach has been referred to as a "poor-man's" partial dependence plot and can be used for non-multilevel data using the [plotmo](http://cran.r-project.org/web/packages/plotmo/plotmo.pdf) package on CRAN. For those interested in true partial dependence plots, I recommend taking a look at the [edarf](https://github.com/zmjones/edarf/) package developed by [Zachary M. Jones](http://zmjones.com) and [Fridolin Linder](http://polisci.la.psu.edu/people/fjl128) in support of "[Exploratory Data Analysis Using Random Forests](https://github.com/zmjones/rfss/)."
 
